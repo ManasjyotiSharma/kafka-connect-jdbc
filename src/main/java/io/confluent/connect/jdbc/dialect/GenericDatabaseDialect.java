@@ -279,6 +279,7 @@ public class GenericDatabaseDialect implements DatabaseDialect {
     String query = checkConnectionQuery();
     if (query != null) {
       try (Statement statement = connection.createStatement()) {
+        statement.setQueryTimeout(timeout);
         if (statement.execute(query)) {
           ResultSet rs = null;
           try {
@@ -488,8 +489,11 @@ public class GenericDatabaseDialect implements DatabaseDialect {
     try (ResultSet rs = metadata.getTableTypes()) {
       while (rs.next()) {
         String tableType = rs.getString(1);
-        if (tableType != null && uppercaseTypes.contains(tableType.toUpperCase(Locale.ROOT))) {
-          matchingTableTypes.add(tableType);
+        if (tableType != null) {
+          tableType = tableType.trim();
+          if (uppercaseTypes.contains(tableType.toUpperCase(Locale.ROOT))) {
+            matchingTableTypes.add(tableType);
+          }
         }
       }
     }
