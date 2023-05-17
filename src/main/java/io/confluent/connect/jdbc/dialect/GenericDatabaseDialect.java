@@ -654,6 +654,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
       String tablePattern,
       String columnPattern
   ) throws SQLException {
+    log.info(String.format("GenericDatabaseDialect#describeColumns: catalogPattern=[%s], "
+        + "schemaPattern=[%s], tablePattern=[%s], columnPattern=[%s]",
+        catalogPattern, schemaPattern, tablePattern, columnPattern));
     glog.debug(
         "Querying {} dialect column metadata for catalog:{} schema:{} table:{}",
         this,
@@ -677,12 +680,15 @@ public class GenericDatabaseDialect implements DatabaseDialect {
         columnPattern
     )) {
       final int rsColumnCount = rs.getMetaData().getColumnCount();
+      log.info("rsColumnCount=" + rsColumnCount);
       while (rs.next()) {
+        log.info("inside: while (rs.next())");
         final String catalogName = rs.getString(1);
         final String schemaName = rs.getString(2);
         final String tableName = rs.getString(3);
         final TableId tableId = new TableId(catalogName, schemaName, tableName);
         final String columnName = rs.getString(4);
+        log.info("Current column is: " + columnName);
         final ColumnId columnId = new ColumnId(tableId, columnName, null);
         final int jdbcType = rs.getInt(5);
         final String typeName = rs.getString(6);
@@ -741,6 +747,8 @@ public class GenericDatabaseDialect implements DatabaseDialect {
             currency,
             isPrimaryKey
         );
+
+        log.info("Adding ColumnDefinition into results for columnId=" + columnId);
         results.put(columnId, defn);
       }
       return results;
@@ -862,11 +870,13 @@ public class GenericDatabaseDialect implements DatabaseDialect {
       Connection connection,
       TableId tableId
   ) throws SQLException {
+    log.info("GenericDatabaseDialect#describeTable: tableId=" + tableId);
     Map<ColumnId, ColumnDefinition> columnDefns = describeColumns(connection, tableId.catalogName(),
                                                                   tableId.schemaName(),
                                                                   tableId.tableName(), null
     );
     if (columnDefns.isEmpty()) {
+      log.info("columnDefns.isEmpty() is true; returning null");
       return null;
     }
     TableType tableType = tableTypeFor(connection, tableId);

@@ -18,8 +18,11 @@ package io.confluent.connect.jdbc.sink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -61,15 +64,21 @@ public class DbStructure {
       final TableId tableId,
       final FieldsMetadata fieldsMetadata
   ) throws SQLException, TableAlterOrCreateException {
+    log.info("DbStructure#createOrAmendIfNecessary: tableId=" + tableId);
+    log.info("Calling tableDefns.get(connection, tableId)");
     if (tableDefns.get(connection, tableId) == null) {
+      log.info("tableDefns.get(connection, tableId) returned null");
       // Table does not yet exist, so attempt to create it ...
       try {
+        log.info("Calling create(config, connection, tableId, fieldsMetadata)");
         create(config, connection, tableId, fieldsMetadata);
       } catch (SQLException sqle) {
-        log.warn("Create failed, will attempt amend if table already exists", sqle);
+        log.info("Create failed, will attempt amend if table already exists", sqle);
         try {
+          log.info("Calling tableDefns.refresh(connection, tableId)");
           TableDefinition newDefn = tableDefns.refresh(connection, tableId);
           if (newDefn == null) {
+            log.info("tableDefns.refresh(connection, tableId) returned null");
             throw sqle;
           }
         } catch (SQLException e) {
@@ -78,9 +87,15 @@ public class DbStructure {
           log.warn(te.getMessage());
           throw te;
         }
+      } catch (TableAlterOrCreateException te) {
+        log.warn(te.getMessage());
+        throw te;
       }
     }
-    return amendIfNecessary(config, connection, tableId, fieldsMetadata, config.maxRetries);
+    boolean amendIfNecessary =
+        amendIfNecessary(config, connection, tableId, fieldsMetadata, config.maxRetries);
+    log.info("amendIfNecessary returned " + amendIfNecessary);
+    return amendIfNecessary;
   }
 
   /**
@@ -114,6 +129,7 @@ public class DbStructure {
       final FieldsMetadata fieldsMetadata
   ) throws SQLException, TableAlterOrCreateException {
     if (!config.autoCreate) {
+      printClassPath();
       throw new TableAlterOrCreateException(
           String.format("Table %s is missing and auto-creation is disabled", tableId)
       );
@@ -121,6 +137,18 @@ public class DbStructure {
     String sql = dbDialect.buildCreateTableStatement(tableId, fieldsMetadata.allFields.values());
     log.info("Creating table with sql: {}", sql);
     dbDialect.applyDdlStatements(connection, Collections.singletonList(sql));
+  }
+
+  private void printClassPath() {
+    try {
+      StringBuilder sb = new StringBuilder();
+      ClassLoader cl = this.getClass().getClassLoader();
+      URL[] urls = ((URLClassLoader) cl).getURLs();
+      Arrays.stream(urls).forEach(url -> sb.append(url.getFile()).append(';'));
+      log.info("Classpath is: " + sb.toString());
+    } catch (Exception e) {
+      log.info("Could not construct the Classpath.", e);
+    }
   }
 
   /**
