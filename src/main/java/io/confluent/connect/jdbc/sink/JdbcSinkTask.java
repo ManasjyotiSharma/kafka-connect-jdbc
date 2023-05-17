@@ -26,7 +26,10 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -49,6 +52,7 @@ public class JdbcSinkTask extends SinkTask {
   @Override
   public void start(final Map<String, String> props) {
     log.info("Starting JDBC Sink task");
+    printClassPath();
     config = new JdbcSinkConfig(props);
     initWriter();
     remainingRetries = config.maxRetries;
@@ -58,6 +62,18 @@ public class JdbcSinkTask extends SinkTask {
     } catch (NoSuchMethodError | NoClassDefFoundError e) {
       // Will occur in Connect runtimes earlier than 2.6
       reporter = null;
+    }
+  }
+
+  private void printClassPath() {
+    try {
+      StringBuilder sb = new StringBuilder();
+      ClassLoader cl = this.getClass().getClassLoader();
+      URL[] urls = ((URLClassLoader) cl).getURLs();
+      Arrays.stream(urls).forEach(url -> sb.append(url.getFile()).append(':'));
+      log.info("Classpath is: " + sb);
+    } catch (Exception e) {
+      log.info("Could not construct the Classpath.", e);
     }
   }
 
