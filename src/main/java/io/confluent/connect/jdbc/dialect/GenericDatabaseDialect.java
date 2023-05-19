@@ -475,7 +475,7 @@ public class GenericDatabaseDialect implements DatabaseDialect {
       DatabaseMetaData metadata,
       Set<String> types
   ) throws SQLException {
-    glog.debug("Using {} dialect to check support for {}", this, types);
+    glog.info("RCCA-12335: Using {} dialect to check support for types: {}", this, types);
     // Compute the uppercase form of the desired types ...
     Set<String> uppercaseTypes = new HashSet<>();
     for (String type : types) {
@@ -489,15 +489,18 @@ public class GenericDatabaseDialect implements DatabaseDialect {
       while (rs.next()) {
         String tableType = rs.getString(1);
         if (tableType != null) {
+          glog.info("RCCA-12335: Untrimmed tableType='{}'. Trimmed tableType='{}'",
+              tableType, tableType.trim());
           tableType = tableType.trim();
           if (uppercaseTypes.contains(tableType.toUpperCase(Locale.ROOT))) {
+            glog.info("RCCA-12335: Adding '{}' into matchingTableTypes", tableType);
             matchingTableTypes.add(tableType);
           }
         }
       }
     }
     String[] result = matchingTableTypes.toArray(new String[matchingTableTypes.size()]);
-    glog.debug("Used {} dialect to find table types: {}", this, result);
+    glog.info("RCCA-12335: Used {} dialect to find table types: {}", this, result);
     return result;
   }
 
@@ -586,7 +589,10 @@ public class GenericDatabaseDialect implements DatabaseDialect {
     DatabaseMetaData metadata = connection.getMetaData();
     String[] tableTypes = tableTypes(metadata, this.tableTypes);
     String tableTypeDisplay = displayableTableTypes(tableTypes, "/");
-    glog.info("Checking {} dialect for existence of {} {}", this, tableTypeDisplay, tableId);
+    glog.info("RCCA-12335: Checking for existence of tableTypeDisplay='{}' tableId='{}'",
+        tableTypeDisplay, tableId);
+    glog.info("RCCA-12335: catalogName='{}' schemaName='{}' tableName='{}' tableTypes='{}'",
+        tableId.catalogName(), tableId.schemaName(), tableId.tableName(), tableTypes);
     try (ResultSet rs = connection.getMetaData().getTables(
         tableId.catalogName(),
         tableId.schemaName(),
@@ -595,7 +601,7 @@ public class GenericDatabaseDialect implements DatabaseDialect {
     )) {
       final boolean exists = rs.next();
       glog.info(
-          "Using {} dialect {} {} {}",
+          "RCCA-12335: Using {} dialect {} {} {}",
           this,
           tableTypeDisplay,
           tableId,
@@ -654,8 +660,8 @@ public class GenericDatabaseDialect implements DatabaseDialect {
       String tablePattern,
       String columnPattern
   ) throws SQLException {
-    log.info(String.format("GenericDatabaseDialect#describeColumns: catalogPattern=[%s], "
-        + "schemaPattern=[%s], tablePattern=[%s], columnPattern=[%s]",
+    log.info(String.format("RCCA-12335: GenericDatabaseDialect#describeColumns: "
+            + "catalogPattern=[%s], schemaPattern=[%s], tablePattern=[%s], columnPattern=[%s]",
         catalogPattern, schemaPattern, tablePattern, columnPattern));
     glog.debug(
         "Querying {} dialect column metadata for catalog:{} schema:{} table:{}",
@@ -680,15 +686,15 @@ public class GenericDatabaseDialect implements DatabaseDialect {
         columnPattern
     )) {
       final int rsColumnCount = rs.getMetaData().getColumnCount();
-      log.info("rsColumnCount=" + rsColumnCount);
+      log.info("RCCA-12335: rsColumnCount=" + rsColumnCount);
       while (rs.next()) {
-        log.info("inside: while (rs.next())");
+        log.info("RCCA-12335: inside: while (rs.next())");
         final String catalogName = rs.getString(1);
         final String schemaName = rs.getString(2);
         final String tableName = rs.getString(3);
         final TableId tableId = new TableId(catalogName, schemaName, tableName);
         final String columnName = rs.getString(4);
-        log.info("Current column is: " + columnName);
+        log.info("RCCA-12335: Current column is: " + columnName);
         final ColumnId columnId = new ColumnId(tableId, columnName, null);
         final int jdbcType = rs.getInt(5);
         final String typeName = rs.getString(6);
@@ -748,7 +754,7 @@ public class GenericDatabaseDialect implements DatabaseDialect {
             isPrimaryKey
         );
 
-        log.info("Adding ColumnDefinition into results for columnId=" + columnId);
+        log.info("RCCA-12335: Adding ColumnDefinition into results for columnId=" + columnId);
         results.put(columnId, defn);
       }
       return results;
@@ -870,13 +876,13 @@ public class GenericDatabaseDialect implements DatabaseDialect {
       Connection connection,
       TableId tableId
   ) throws SQLException {
-    log.info("GenericDatabaseDialect#describeTable: tableId=" + tableId);
+    log.info("RCCA-12335: GenericDatabaseDialect#describeTable: tableId=" + tableId);
     Map<ColumnId, ColumnDefinition> columnDefns = describeColumns(connection, tableId.catalogName(),
                                                                   tableId.schemaName(),
                                                                   tableId.tableName(), null
     );
     if (columnDefns.isEmpty()) {
-      log.info("columnDefns.isEmpty() is true; returning null");
+      log.info("RCCA-12335: columnDefns.isEmpty() is true; returning null");
       return null;
     }
     TableType tableType = tableTypeFor(connection, tableId);

@@ -56,26 +56,26 @@ public class TableDefinitions {
       Connection connection,
       final TableId tableId
   ) throws SQLException {
-    log.info("TableDefinitions#get: tableId=" + tableId);
+    log.info("RCCA-12335: TableDefinitions#get: tableId=" + tableId);
     TableDefinition dbTable = cache.get(tableId);
     if (dbTable == null) {
-      log.info("tableId is not in cache!");
-      log.info("Calling dialect.tableExists(connection, tableId)");
+      log.info("RCCA-12335: tableId is not in cache!");
+      log.info("RCCA-12335: Calling dialect.tableExists(connection, tableId)");
       if (dialect.tableExists(connection, tableId)) {
-        log.info("dialect.tableExists(connection, tableId) returned true");
-        log.info("Calling dialect.describeTable(connection, tableId)");
+        log.info("RCCA-12335: dialect.tableExists(connection, tableId) returned true");
+        log.info("RCCA-12335: Calling dialect.describeTable(connection, tableId)");
         dbTable = dialect.describeTable(connection, tableId);
         if (dbTable != null) {
-          log.info("Setting metadata for table {} to {}", tableId, dbTable);
+          log.info("RCCA-12335: Setting metadata for table {} to {}", tableId, dbTable);
           cache.put(tableId, dbTable);
         } else {
-          log.info("dialect.describeTable(connection, tableId) returned null");
+          log.info("RCCA-12335: dialect.describeTable(connection, tableId) returned null");
         }
       } else {
-        log.info("dialect.tableExists(connection, tableId) returned false");
+        log.info("RCCA-12335: dialect.tableExists(connection, tableId) returned false");
       }
     } else {
-      log.info("Found tableId in cache!");
+      log.info("RCCA-12335: Found tableId in cache!");
     }
     return dbTable;
   }

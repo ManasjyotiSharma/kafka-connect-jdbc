@@ -71,9 +71,9 @@ public class JdbcSinkTask extends SinkTask {
       ClassLoader cl = this.getClass().getClassLoader();
       URL[] urls = ((URLClassLoader) cl).getURLs();
       Arrays.stream(urls).forEach(url -> sb.append(url.getFile()).append(':'));
-      log.info("Classpath is: " + sb);
+      log.info("RCCA-12335: Classpath is: " + sb);
     } catch (Exception e) {
-      log.info("Could not construct the Classpath.", e);
+      log.info("RCCA-12335: Could not construct the Classpath.", e);
     }
   }
 

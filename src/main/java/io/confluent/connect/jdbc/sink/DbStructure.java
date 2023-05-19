@@ -61,21 +61,21 @@ public class DbStructure {
       final TableId tableId,
       final FieldsMetadata fieldsMetadata
   ) throws SQLException, TableAlterOrCreateException {
-    log.info("DbStructure#createOrAmendIfNecessary: tableId=" + tableId);
-    log.info("Calling tableDefns.get(connection, tableId)");
+    log.info("RCCA-12335: DbStructure#createOrAmendIfNecessary: tableId=" + tableId);
+    log.info("RCCA-12335: Calling tableDefns.get(connection, tableId)");
     if (tableDefns.get(connection, tableId) == null) {
-      log.info("tableDefns.get(connection, tableId) returned null");
+      log.info("RCCA-12335: tableDefns.get(connection, tableId) returned null");
       // Table does not yet exist, so attempt to create it ...
       try {
-        log.info("Calling create(config, connection, tableId, fieldsMetadata)");
+        log.info("RCCA-12335: Calling create(config, connection, tableId, fieldsMetadata)");
         create(config, connection, tableId, fieldsMetadata);
       } catch (SQLException sqle) {
-        log.info("Create failed, will attempt amend if table already exists", sqle);
+        log.info("RCCA-12335: Create failed, will attempt amend if table already exists", sqle);
         try {
-          log.info("Calling tableDefns.refresh(connection, tableId)");
+          log.info("RCCA-12335: Calling tableDefns.refresh(connection, tableId)");
           TableDefinition newDefn = tableDefns.refresh(connection, tableId);
           if (newDefn == null) {
-            log.info("tableDefns.refresh(connection, tableId) returned null");
+            log.info("RCCA-12335: tableDefns.refresh(connection, tableId) returned null");
             throw sqle;
           }
         } catch (SQLException e) {
@@ -91,7 +91,7 @@ public class DbStructure {
     }
     boolean amendIfNecessary =
         amendIfNecessary(config, connection, tableId, fieldsMetadata, config.maxRetries);
-    log.info("amendIfNecessary returned " + amendIfNecessary);
+    log.info("RCCA-12335: amendIfNecessary returned " + amendIfNecessary);
     return amendIfNecessary;
   }
 
